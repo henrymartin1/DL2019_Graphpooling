@@ -94,9 +94,9 @@ dependencies:
   - zlib=1.2.11
 
 # PyTorch Geometric. Not easy to install due to compilation.
-conda activate ntds_2019
-pip install requests torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric
-- pip:
+# conda activate ntds_2019
+# pip install requests torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric
+pip:
   - chardet==3.0.4
   - googledrivedownloader==0.4
   - h5py==2.10.0
