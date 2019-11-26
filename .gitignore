@@ -2,3 +2,6 @@
 __pycache__
 .idea
 *checkpoint.pt
+.ipynb_checkpoints
+data
+data/*
