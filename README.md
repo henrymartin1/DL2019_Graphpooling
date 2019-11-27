@@ -1,13 +1,3 @@
-# traffic4cast
-Submission to the iarai traffic4cast competition
-
-## Howto
-
-
-
-## trained models
-https://polybox.ethz.ch/index.php/s/qMMweI8P65HW0h8
-
-
+# Deep learning 2019 group work on graph pooling methods
 
 
