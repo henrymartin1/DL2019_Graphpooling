@@ -16,7 +16,8 @@ dependencies:
   - networkx
   - pytorch 
   - torchvision
-  - cudatoolkit=10.1
+  #- cudatoolkit=10.1
+  - cpuonly # replace cpuonly with your cuda version for GPU support
   - future
   - pillow
   - tensorboard
