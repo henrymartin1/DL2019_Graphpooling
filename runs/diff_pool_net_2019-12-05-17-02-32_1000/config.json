@@ -1,0 +1,1 @@
+{"model": {"num_clusters": 1000, "nh0_1": 16, "nh1_1": 50, "n_out0": 10, "n_out1": 20}, "modelname": "diff_pool_net", "model_log_info": "1000", "optimizer": {"lr": 0.1}, "loss": "other", "epochs": 300, "patience": 75}
