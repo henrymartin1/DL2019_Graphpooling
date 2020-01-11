@@ -1,5 +1,5 @@
 """
-Created on Sun Dec 2
+Edited on Jan 11th 2020
 
 Based on the original implementation of the paper by the authors
 
@@ -15,9 +15,12 @@ from torch_geometric import utils
 from torch_geometric.utils.convert import to_networkx
 import torch.nn.functional as F
 from torch.utils.data import random_split
-from networks import Net
-from torch_geometric.nn import SAGPooling, GraphConv, TopKPooling, GCNConv
+from networkx import Net
+from torch_geometric.nn import SAGPooling, GraphConv, TopKPooling, GCNConv, DenseSAGEConv
 from torch_geometric.nn import global_mean_pool as gap, global_max_pool as gmp
+
+from torch_geometric.utils import to_scipy_sparse_matrix, to_dense_adj, from_networkx
+from torch_geometric.utils import dense_to_sparse, from_scipy_sparse_matrix
 
 import argparse
 import os
@@ -31,16 +34,19 @@ from torch_geometric.nn import GCNConv
 from torch_geometric.nn.pool.topk_pool import topk, filter_adj
 from torch.nn import Parameter
 
+sys.path.append(os.path.join(os.getcwd(),'..'))
+
 
 class SAGPool(torch.nn.Module):
     def __init__(self, in_channels, ratio=0.8, Conv=GCNConv, non_linearity=torch.tanh):
         super(SAGPool, self).__init__()
+      
         self.in_channels = in_channels
         self.ratio = ratio
         self.score_layer = Conv(in_channels, 1)
         self.non_linearity = non_linearity
 
-    def forward(self, x, edge_index, edge_attr=None, batch=None):
+    def forward2(self, x, edge_index, edge_attr=None, batch=None):
         if batch is None:
             batch = edge_index.new_zeros(x.size(0))
         # x = x.unsqueeze(-1) if x.dim() == 1 else x
@@ -66,10 +72,22 @@ class SAGPool(torch.nn.Module):
 
             self.conv1 = GCNConv(self.num_features, self.nhid)
             self.pool1 = SAGPool(self.nhid, ratio=self.pooling_ratio)
+            
             self.conv2 = GCNConv(self.nhid, self.nhid)
             self.pool2 = SAGPool(self.nhid, ratio=self.pooling_ratio)
+            
             self.conv3 = GCNConv(self.nhid, self.nhid)
-            self.pool3 = SAGPool(self.nhid, ratio=self.pooling_ratio)
+            #self.pool3 = SAGPool(self.nhid, ratio=self.pooling_ratio)
+            
+            # adding unpooling layers
+            #self.conv4 = GCNConv(self.num_features, self.nhid)
+            #self.unpool4 = SAGUnpool(self.nhid, ratio=self.pooling_ratio)
+            self.conv4 = GCNConv(self.nhid, self.nhid)
+            
+            #self.unpool5 = SAGUnpool(self.nhid, ratio=self.pooling_ratio)
+            self.conv5 = GCNConv(self.nhid, self.nhid)
+            #self.unpool6 = SAGPool(self.nhid, ratio=self.pooling_ratio)
+            
 
             self.lin1 = torch.nn.Linear(self.nhid * 2, self.nhid)
             self.lin2 = torch.nn.Linear(self.nhid, self.nhid // 2)
@@ -78,20 +96,29 @@ class SAGPool(torch.nn.Module):
     def forward(self, data):
         x, edge_index, batch = data.x, data.edge_index, data.batch
 
+        # Step 1: Conv1 + Pool1 layers
         x = F.relu(self.conv1(x, edge_index))
         x, edge_index, _, batch, _ = self.pool1(x, edge_index, None, batch)
         x1 = torch.cat([gmp(x, batch), gap(x, batch)], dim=1)
-
+        
+        # Step 2: Conv2 + Pool2 layers
         x = F.relu(self.conv2(x, edge_index))
         x, edge_index, _, batch, _ = self.pool2(x, edge_index, None, batch)
         x2 = torch.cat([gmp(x, batch), gap(x, batch)], dim=1)
-
+        
+        # Step 2: Conv3 layer
         x = F.relu(self.conv3(x, edge_index))
         x, edge_index, _, batch, _ = self.pool3(x, edge_index, None, batch)
         x3 = torch.cat([gmp(x, batch), gap(x, batch)], dim=1)
+        
+        # Unpooling steps
+        edge_index_sparse_tuple = dense_to_sparse(torch.squeeze(edge_index))        
+        x3 = self.conv4(torch.squeeze(x3), edge_index_sparse_tuple[0], edge_index_sparse_tuple[1])
+        
+        x3_unpooled = torch.matmul(x, x3)
 
-        x = x1 + x2 + x3
-
+        x = x1 + x2 + x3_unpooled
+        
         x = F.relu(self.lin1(x))
         x = F.dropout(x, p=self.dropout_ratio, training=self.training)
         x = F.relu(self.lin2(x))
