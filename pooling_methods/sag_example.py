@@ -4,7 +4,7 @@ Based on the original implementation of the paper by the authors
 STATUS: Currently adapting to the Cora dataset.
 @author: glili
 """
-
+"""
 import torch
 from torch_geometric.datasets import TUDataset, Planetoid
 from torch_geometric.data import DataLoader, DenseDataLoader
@@ -214,3 +214,4 @@ model = Net(args).to(args.device)
 model.load_state_dict(torch.load('latest.pth'))
 test_acc, test_loss = test(model, test_loader)
 print("Test accuarcy:{}".fotmat(test_acc))
+"""
