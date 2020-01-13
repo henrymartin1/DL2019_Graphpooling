@@ -6,17 +6,17 @@ config = {}
 
 # model statistics 
 config['model'] = {}
-config['model']['num_clusters'] = 500
-config['model']['nh0_1'] = 16
-config['model']['nh1_1'] = 16
-config['model']['n_out0'] = 10
-config['model']['n_out1'] = 100
+config['model']['num_clusters1'] = 100
+config['model']['num_clusters2'] = 50
+config['model']['nh'] = 16
+config['model']['wf'] = 2
+
 
 # model name
 config['modelname'] = 'diff_pool_net' 
 
 # log name
-config['model_log_info'] =  str(config['model']['num_clusters'])        
+config['model_log_info'] =  str(config['model']['num_clusters1'])        
 
 
 # optimizer

@@ -54,63 +54,101 @@ class GCN(torch.nn.Module):
 
 
 class diff_pool_net1(torch.nn.Module):
-    def __init__(self, num_clusters=100, nh0_1=16, nh1_1=16, n_out0=10, n_out1=100):
+    def __init__(self, num_clusters1, num_clusters2, nh=16, wf=None):
         super(diff_pool_net1, self).__init__()
-
+       
+        if wf == None:
+            wf = np.round(np.log2(dataset.num_classes))+1
+        
+            
         # level 0: original graph
-        self.gcn0 = GCN(dataset.num_features, nh0_1, n_out0)
-
+        self.gcn0_in = GCN(dataset.num_features, nh, 2**wf)
+        self.gcn0_out = GCN(2**(wf) + 2**(wf+1), nh, dataset.num_classes)
+               
         # level 1: pooled 1
-        self.conv_pool1 = GCNConv(dataset.num_features, num_clusters, cached=True)
-        self.gcn1 = GCN(dataset.num_features, nh1_1, n_out1)
-
-        # final layer: concat 
-        self.conv_concat = GCNConv(n_out0 + n_out1, dataset.num_classes, cached=True)
+        self.conv_pool1 = GCNConv(2**wf, num_clusters1, cached=True)
+        self.gcn1_in = GCN(2**wf, nh, 2**(wf+1))
+        self.gcn1_out = GCN(2**(wf+1) + 2**(wf+2), nh, 2**(wf+1))
+        
+        # level 2: pooled 2
+        self.conv_pool2 = GCNConv(2**(wf+1), num_clusters2, cached=True)
+        self.gcn2_in = GCN(2**(wf+1), nh, 2**(wf+2))
+        
 
     def forward(self, mask):
         # unpack the data container
-        x, edge_index, edge_weight = data.x, data.edge_index, data.edge_attr
+        x0, edge_index0, edge_weight0 = data.x, data.edge_index, data.edge_attr
 
-        # regurlar gcn
-        x0 = self.gcn0(x, edge_index, edge_weight)
+        # level 0 conv  
+        x0_ = self.gcn0_in(x0, edge_index0, edge_weight0)
 
-        # pooled1 
-        s01 = F.relu(self.conv_pool1(x, edge_index, edge_weight))
-        x1, adj1, l1, e1 = dense_diff_pool(x, data.adj, s01, mask)
-
-        # unpool
+        # pooled 1 
+        s1 = F.relu(self.conv_pool1(x0_, edge_index0, edge_weight0))
+        x1, adj1, l1, e1 = dense_diff_pool(x0_, data.adj, s1, mask)
+        x1 = torch.squeeze(x1)
+        # get edge index level 1
         adj1_sparse_tuple = dense_to_sparse(torch.squeeze(adj1))
-        x1 = self.gcn1(torch.squeeze(x1), adj1_sparse_tuple[0], adj1_sparse_tuple[1])
+        edge_index1 = adj1_sparse_tuple[0]
+        edge_weight1 = adj1_sparse_tuple[1]
+                
+        # level 1 conv
+        x1_ = self.gcn1_in(x1, edge_index1, edge_weight1)
+        
+        # pooled 2 
+        s2 = F.relu(self.conv_pool1(x1_, edge_index1, edge_weight1))
+        x2, adj2, l2, e2 = dense_diff_pool(x1_, adj1, s2)
+        x2 = torch.squeeze(x2)
+        
+        # get edge index level 2
+        adj2_sparse_tuple = dense_to_sparse(torch.squeeze(adj2))
+        edge_index2 = adj2_sparse_tuple[0]
+        edge_weight2 = adj2_sparse_tuple[1]
+        
+        # level 2 conv
+        x2_out = self.gcn2_in(x2, edge_index2, edge_weight2)
+        x2_out_up = torch.matmul(s2, x2_out) # unpool level 2
+        
+        # output level 1
+        x1_out = self.gcn1_out(torch.cat((x1_, x2_out_up), 1), edge_index1, edge_weight1)
+        x1_out_up = torch.matmul(s1, x1_out) # unpool level 1
+        
+        # output level 0 
+        x0_out = self.gcn0_out(torch.cat((x0_, x1_out_up), 1), edge_index0, edge_weight0)
+        
+#    
+#        # unpool
+#        adj1_sparse_tuple = dense_to_sparse(torch.squeeze(adj1))
+#        x1 = self.gcn1(torch.squeeze(x1), adj1_sparse_tuple[0], adj1_sparse_tuple[1])
+#
+#        x1_unpooled = torch.matmul(s01, x1)
+#
+#        # concat predictions
+#        x_final = torch.cat((x0, x1_unpooled), 1)
+#        x_final = self.conv_concat(x_final, edge_index)
 
-        x1_unpooled = torch.matmul(s01, x1)
+        edge_loss = l1 + e1 +l2 + e2
 
-        # concat predictions
-        x_final = torch.cat((x0, x1_unpooled), 1)
-        x_final = self.conv_concat(x_final, edge_index)
-
-        edge_loss = l1 + e1
-
-        output_dict = {'prediction': F.log_softmax(x_final, dim=1), 's01': s01,
+        output_dict = {'prediction': F.log_softmax(x0_out, dim=1), 's01': s1,
                        'edge_loss': edge_loss, 'adj1': adj1}
 
         return output_dict
 
-
-def update_config(config, num_clusters=100, nh1_1=16, n_out1=100, lr=0.01, \
-                  config_loss='single'):
-    # model statistics
-    config['model']['num_clusters'] = num_clusters
-    config['model']['nh1_1'] = nh1_1
-    config['model']['n_out1'] = n_out1
-
-    # log name
-    config['model_log_info'] = str(config['model']['num_clusters'])
-    config['optimizer']['lr'] = lr
-
-    # loss
-    config['loss'] = config_loss
-
-    return config
+#
+#def update_config(config, num_clusters=100, nh1_1=16, n_out1=100, lr=0.01, \
+#                  config_loss='single'):
+#    # model statistics
+#    config['model']['num_clusters'] = num_clusters
+#    config['model']['nh1_1'] = nh1_1
+#    config['model']['n_out1'] = n_out1
+#
+#    # log name
+#    config['model_log_info'] = str(config['model']['num_clusters'])
+#    config['optimizer']['lr'] = lr
+#
+#    # loss
+#    config['loss'] = config_loss
+#
+#    return config
 
 
 def train():
@@ -165,7 +203,7 @@ with open(os.path.join(log_dir, 'config.json'), 'w') as fp:
 
 # define device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+device = torch.device('cpu')
 # model
 model = diff_pool_net1(**config['model']).to(device)
 data = data.to(device)
