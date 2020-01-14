@@ -33,7 +33,7 @@ data = dataset[0]
 class Net(torch.nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.unet = GraphUNet(dataset.num_features, 32, dataset.num_classes, depth=depth, pool_ratios=pool_ratios, dropout_rate=dropout_rate)
+        self.unet = GraphUNet(dataset.num_features, 32, dataset.num_classes, depth=depth, pool_ratios=pool_ratios, dropout_rate=dropout_rate, sum_res=False)
 
     def forward(self):
         edge_index, _ = dropout_adj(
