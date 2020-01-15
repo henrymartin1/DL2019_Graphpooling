@@ -36,10 +36,11 @@ class Net(torch.nn.Module):
         self.unet = GraphUNet(dataset.num_features, 32, dataset.num_classes, depth=depth, pool_ratios=pool_ratios, dropout_rate=dropout_rate, sum_res=False)
 
     def forward(self):
+        #No dropout happening here anymore, the dropout probabilities are both 0
         edge_index, _ = dropout_adj(
-            data.edge_index, p=0.2, force_undirected=True,
+            data.edge_index, p=0, force_undirected=True,
             num_nodes=data.num_nodes, training=self.training)
-        x = F.dropout(data.x, p=0.92, training=self.training)
+        x = F.dropout(data.x, p=0, training=self.training)
 
         x = self.unet(x, edge_index)
         return F.log_softmax(x, dim=1)
