@@ -77,7 +77,7 @@ data.adj = to_dense_adj(data.edge_index)
 
 loss_lambda = config['loss_lambda']
 
-# data
+# data 
 data = data.to(device)
 
 lr = config['optimizer']['lr']
@@ -92,7 +92,7 @@ time_tracking_dict = {'n_epochs': [],
 best_val_acc = test_acc = 0
 
 t_start_all = time.time()
-for n_repeats in range(10):
+for n_repeats in range(50):
     
    
     for model_this in config['model'].keys():
@@ -103,7 +103,7 @@ for n_repeats in range(10):
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
         
         t_start = time.time()
-        for epoch in range(1, 151):
+        for epoch in range(1, 15):
                 
             train(model_this)
         
@@ -138,6 +138,8 @@ g = sns.catplot(x="n_epochs", y="time", hue="method", data=time_tracking_df,
                 height=6, kind="bar", palette="muted")
 g.despine(left=True)
 g.set_ylabels("Time in seconds")
+
+
 
 g = sns.catplot(x="n_epochs", y="accuracy", hue="method", data=time_tracking_df,
                 height=6, kind="point", palette="muted")
