@@ -89,25 +89,29 @@ time_tracking_dict = {'n_epochs': [],
                       'method': [],
                       'accuracy': []}
 
+memory_tracking_dict = {'method': [],
+                      'memory': []
+                      }
+
+
 best_val_acc = test_acc = 0
 
 t_start_all = time.time()
-for n_repeats in range(50):
+for n_repeats in range(10):
     
    
     for model_this in config['model'].keys():
-        print(model_this)
-        
+        torch.cuda.reset_max_memory_allocated(device=device)
         model_constructor = config['model'][model_this]['model_constructor']
         model = model_constructor(dataset, **config['model'][model_this]['parameters']).to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
         
         t_start = time.time()
-        for epoch in range(1, 15):
+        for epoch in range(1, 6):
                 
             train(model_this)
         
-            if epoch in [5, 10, 25, 50, 100, 150]:
+            if epoch in [1, 5, 10, 25, 50, 100]:
                 accs = test(model_this)
                 t_this = time.time()-t_start
                 
@@ -124,11 +128,20 @@ for n_repeats in range(50):
                 
                 log = 'Method: {}, Epoch: {:03d}, Train: {:.4f}, Val: {:.4f}, Test: {:.4f}, time: {:.4f}s'
                 print(log.format(model_this, epoch, train_acc, best_val_acc, test_acc, t_this))
+        
+        max_mem = torch.cuda.max_memory_allocated(device)
+        
+        memory_tracking_dict['method'].append(model_this)
+        memory_tracking_dict['memory'].append(max_mem)
+        
+        print(max_mem)
+                
 
 
 print('finished', 'total time', time.time()-t_start_all)
 
 time_tracking_df = pd.DataFrame(data=time_tracking_dict)
+memory_tracking_df = pd.DataFrame(data=memory_tracking_dict)
 
 # plot
 sns.set(style="whitegrid")
@@ -143,4 +156,8 @@ g.set_ylabels("Time in seconds")
 
 g = sns.catplot(x="n_epochs", y="accuracy", hue="method", data=time_tracking_df,
                 height=6, kind="point", palette="muted")
+
+
+g = sns.catplot(x="method", y="memory", data=memory_tracking_df,
+                height=6, kind="bar", palette="muted")
 
