@@ -33,22 +33,22 @@ class GCN(torch.nn.Module):
         return x    
 
 class diff_pool_net2(torch.nn.Module):
-    def __init__(self, dataset, num_clusters1, num_clusters2, n_hidden=64, wf=None):
-        super(diff_pool_net2, self).__init__()
+    def __init__(self, dataset, num_clusters1, num_clusters2, n_hidden=64, hidden_channels=None):
+        super(diff_pool_net2, self).__init__()     
        
             
         # level 0: original graph
-        self.gcn0_in = GCN(n_in=dataset.num_features, n_out=2**wf, n_hid=n_hidden)
-        self.gcn0_out = GCN(n_in=2**(wf) + 2**(wf+1), n_out=dataset.num_classes, n_hid=n_hidden)
+        self.gcn0_in = GCN(n_in=dataset.num_features, n_out=hidden_channels, n_hid=n_hidden)
+        self.gcn0_out = GCN(n_in=2*hidden_channels, n_out=dataset.num_classes, n_hid=n_hidden)
                
         # level 1: pooled 1
-        self.conv_pool1 = GCNConv(2**wf, num_clusters1, cached=False)
-        self.gcn1_in = GCN(n_in=2**wf, n_out=2**(wf+1), n_hid=n_hidden)
-        self.gcn1_out = GCN(n_in=2**(wf+1) + 2**(wf+2), n_out=2**(wf+1), n_hid=n_hidden)
+        self.conv_pool1 = GCNConv(hidden_channels, num_clusters1, cached=False)
+        self.gcn1_in = GCN(n_in=hidden_channels, n_out=hidden_channels, n_hid=n_hidden)
+        self.gcn1_out = GCN(n_in=2*hidden_channels, n_out=hidden_channels, n_hid=n_hidden)
         
         # level 2: pooled 2
-        self.conv_pool2 = GCNConv(2**(wf+1), num_clusters2, cached=False)
-        self.gcn2_in = GCN(n_in=2**(wf+1), n_out=2**(wf+2), n_hid=n_hidden)
+        self.conv_pool2 = GCNConv(hidden_channels, num_clusters2, cached=False)
+        self.gcn2_in = GCN(n_in=hidden_channels, n_out=hidden_channels, n_hid=n_hidden)
         
 
     def forward(self, data, mask):

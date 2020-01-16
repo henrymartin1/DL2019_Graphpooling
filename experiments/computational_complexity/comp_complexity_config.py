@@ -21,7 +21,7 @@ config['model']['diff_pool_net1']['model_constructor'] = diff_pool_net1
 config['model']['diff_pool_net1']['parameters'] = {}
 config['model']['diff_pool_net1']['parameters']['num_clusters1'] = 600
 config['model']['diff_pool_net1']['parameters']['num_clusters2'] = 50
-config['model']['diff_pool_net1']['parameters']['wf'] = 5 # should be log_2 (n_features) would be 11 for cora
+config['model']['diff_pool_net1']['parameters']['hidden_channels'] = 32
 
 # diffpool 2
 config['model']['diff_pool_net2'] = {}
@@ -30,7 +30,8 @@ config['model']['diff_pool_net2']['model_constructor'] = diff_pool_net2
 config['model']['diff_pool_net2']['parameters']['num_clusters1'] = 500
 config['model']['diff_pool_net2']['parameters']['num_clusters2'] = 250
 config['model']['diff_pool_net2']['parameters']['n_hidden'] = 128
-config['model']['diff_pool_net2']['parameters']['wf'] = 7
+config['model']['diff_pool_net2']['parameters']['hidden_channels'] = 32
+
 
 # topk
 config['model']['topk'] = {}
@@ -50,15 +51,14 @@ config['model']['sagpool']['parameters']['pool_ratios'] = [0.5, 0.5]
 config['model']['sagpool']['parameters']['dropout_rate'] = 0.
 config['model']['sagpool']['parameters']['hidden_channels'] = 32
 
-
+# loss
+config['loss_lambda'] = 0
 
 # optimizer
 config['optimizer'] = {}
 config['optimizer']['lr'] = 0.01
 
-# loss
-config['loss'] = 'multi'
-config['loss_lambda'] = 0.0001
+
 
 # epochs
 config['epochs'] = 500
