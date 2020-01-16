@@ -5,6 +5,8 @@ Based on the graph unet example from torch_geometric
 
 import os.path as osp
 
+import sys
+import random
 import torch
 import torch.nn.functional as F
 from torch_geometric.datasets import Planetoid
@@ -17,11 +19,18 @@ patience = 25 #for early stopping
 dropout_rate = 0. #the dropout rate in the conv layers
 pool_ratios = [0.5, 0.5] #the pooling ratios for each pooling layer
 depth = 2  #The depth of the U-Net, i.e., the number of encoding/decoding blocks
+#Sets the the fraction of graph nodes to be used for training, the remaining nodes will be split roughly evenly between validation and test data: 
+if len(sys.argv) < 2:
+    print("Usage: python graph_unet_train.py <train_fraction> \n Setting fraction to default value of 0.2")
+    training_fraction = 0.2
+else:
+    training_fraction = float(sys.argv[1])
 print("Dataset: " + dataset)
 print("Patience: " + str(patience))
 print("Dropout rate: " + str(dropout_rate))
 print("Pool ratios: " + str(pool_ratios))
 print("Depth: " + str(depth))
+print("Training fraction: " + str(training_fraction))
 
 
 path = osp.join(osp.dirname(osp.realpath(__file__)), '.', 'data', dataset)
@@ -29,6 +38,24 @@ dataset = Planetoid(path, dataset)
 #dataset = CoraFull(path)
 data = dataset[0]
 
+print("Original training fraction: ")
+print(data.train_mask.sum().item()/data.num_nodes)
+
+print("Setting train, val, and test masks according to the fraction specified...")
+for node in range(0, data.num_nodes-1):
+    if random.random() < training_fraction: #with probability training_fraction include the node in the training set
+        data.train_mask[node] = True
+        data.val_mask[node] = False
+        data.test_mask[node] = False
+    else:
+        data.train_mask[node] = False
+        if random.random() < 0.5: #split the remaining nodes roughly evenly between validation and test sets
+            data.val_mask[node] = True
+            data.test_mask[node] = False
+        else:
+            data.val_mask[node] = False
+            data.test_mask[node] = True
+print("done")
 
 class Net(torch.nn.Module):
     def __init__(self):
