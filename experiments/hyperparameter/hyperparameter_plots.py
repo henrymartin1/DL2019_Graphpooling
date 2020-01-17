@@ -20,11 +20,11 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from experiments.complexity.complexity_config import config
+from experiments.hyperparameter.pooling_dropout_config import config
 
 results_dict = pickle.load( open( config['output_file'], "rb" ) )
 
-figure_path = os.path.join('experiments', 'complexity')
+figure_path = os.path.join('experiments', 'hyperparameter')
 
 time_tracking_df = results_dict['time']
 memory_tracking_df = results_dict['memory']

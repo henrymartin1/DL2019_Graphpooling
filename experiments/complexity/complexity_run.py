@@ -27,7 +27,9 @@ import torch.nn.functional as F
 from networkx import from_numpy_matrix
 
 from experiments.complexity.complexity_config import config
+#from experiments.complexity.pooling_dropout_config import config
 
+torch.manual_seed(0)
 
 def test(model_name):
     model.eval()
@@ -95,13 +97,14 @@ memory_tracking_dict = {'method': [],
                       }
 
 
-best_val_acc = test_acc = 0
+
 
 t_start_all = time.time()
 for n_repeats in range(config['n_repeats']):
     
    
     for model_this in config['model'].keys():
+        best_val_acc = test_acc = 0
         torch.cuda.reset_max_memory_allocated(device=device)
         model_constructor = config['model'][model_this]['model_constructor']
         model = model_constructor(dataset, **config['model'][model_this]['parameters']).to(device)

@@ -14,6 +14,7 @@ from torch_geometric.nn import dense_diff_pool
 from torch_geometric.nn import GCNConv
 from torch_geometric.utils import to_scipy_sparse_matrix, to_dense_adj, \
     dense_to_sparse, from_scipy_sparse_matrix, from_networkx
+from torch_geometric.utils import dropout_adj
 
 sys.path.append(os.path.join(os.getcwd(), '..'))
 
@@ -31,8 +32,13 @@ class GCN(torch.nn.Module):
 
 
 class diff_pool_net1(torch.nn.Module):
-    def __init__(self, dataset, num_clusters1, num_clusters2, n_hidden=64, hidden_channels=None):
-        super(diff_pool_net1, self).__init__()      
+    def __init__(self, dataset, num_clusters1, num_clusters2, n_hidden=64, hidden_channels=None, \
+                    p_dropout_adj=0.2, p_dropout_nodes=0.92):
+        super(diff_pool_net1, self).__init__()
+
+        # initial dropout
+        self.initial_dropout_adj = p_dropout_adj
+        self.initial_dropout_nodes = p_dropout_nodes
             
         # level 0: original graph
         self.gcn0_in = GCN(n_in=dataset.num_features, n_out=hidden_channels, n_hid=n_hidden)
@@ -50,13 +56,19 @@ class diff_pool_net1(torch.nn.Module):
 
     def forward(self, data, mask):
         # unpack the data container
-        x0, edge_index0, edge_weight0 = data.x, data.edge_index, data.edge_attr
+        #  x0, edge_index0, edge_weight0 = data.x, data.edge_index, data.edge_attr
+
+
+        edge_index0, _ = dropout_adj(
+            data.edge_index, p=self.initial_dropout_adj, force_undirected=True,
+            num_nodes=data.num_nodes, training=self.training)
+        x0 = F.dropout(data.x, p=self.initial_dropout_nodes, training=self.training)
 
         # level 0 conv  
-        x0_ = self.gcn0_in(x0, edge_index0, edge_weight0)
+        x0_ = self.gcn0_in(x0, edge_index0)
 
         # pooled 1 
-        s1 = F.relu(self.conv_pool1(x0_, edge_index0, edge_weight0))
+        s1 = F.relu(self.conv_pool1(x0_, edge_index0))
         x1, adj1, l1, e1 = dense_diff_pool(x0_, data.adj, s1, mask)
         x1 = torch.squeeze(x1)
         
@@ -88,7 +100,7 @@ class diff_pool_net1(torch.nn.Module):
         x1_out_up = torch.matmul(s1, x1_out) # unpool level 1
         
         # output level 0 
-        x0_out = self.gcn0_out(torch.cat((x0_, x1_out_up), 1), edge_index0, edge_weight0)
+        x0_out = self.gcn0_out(torch.cat((x0_, x1_out_up), 1), edge_index0)
     
         edge_loss = l1 + e1 +l2 + e2
         
