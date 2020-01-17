@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-STILL WORK-IN-PROGRESS
 Created on Jan 17 based on Henry's complexity_run.py implementation
 
 @author: glili
