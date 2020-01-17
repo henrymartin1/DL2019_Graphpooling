@@ -91,15 +91,15 @@ train_percentage_dict = {   'method': [],
                             'best_accuracy': []}
 
 
-best_val_acc = test_acc = 0
-
-for n_repeats in range(10):
+for n_repeats in range(1):
+    print("Repetition {} of 10".format(str(n_repeats+1)))
     for model_this in config['model'].keys():
-        #torch.cuda.reset_max_memory_allocated(device=device)
-        model_constructor = config['model'][model_this]['model_constructor']
-        model = model_constructor(dataset, **config['model'][model_this]['parameters']).to(device)
-        optimizer = torch.optim.Adam(model.parameters(), lr=lr)
         for training_fraction in config['train_fracs']:
+            model_constructor = config['model'][model_this]['model_constructor']
+            model = model_constructor(dataset, **config['model'][model_this]['parameters']).to(device)
+            optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+            
+            #set the training mask according to training_fraction:
             for node in range(0, data.num_nodes-1):
                 if random.random() < training_fraction: #with probability training_fraction include the node in the training set
                     data.train_mask[node] = True
@@ -114,6 +114,7 @@ for n_repeats in range(10):
                         data.val_mask[node] = False
                         data.test_mask[node] = True
             
+            best_val_acc = test_acc = 0
             for epoch in range(config['epochs']):
                 train(model_this)
                 accs = test(model_this)

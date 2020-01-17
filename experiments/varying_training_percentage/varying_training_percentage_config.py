@@ -15,22 +15,22 @@ pool_ratios = [0.35, 0.35]
 # model parameters
 config['model'] = {}
 
-## diffpool 1
-#config['model']['diff_pool_net1'] = {}
-#config['model']['diff_pool_net1']['model_constructor'] = diff_pool_net1
-#config['model']['diff_pool_net1']['parameters'] = {}
-#config['model']['diff_pool_net1']['parameters']['num_clusters1'] = int(2708*pool_ratios[0])
-#config['model']['diff_pool_net1']['parameters']['num_clusters2'] = int(2708*pool_ratios[0]*pool_ratios[1])
-#config['model']['diff_pool_net1']['parameters']['hidden_channels'] = 32
-#
-## diffpool 2
-#config['model']['diff_pool_net2'] = {}
-#config['model']['diff_pool_net2']['parameters'] = {}
-#config['model']['diff_pool_net2']['model_constructor'] = diff_pool_net2
-#config['model']['diff_pool_net2']['parameters']['num_clusters1'] = int(2708*pool_ratios[0])
-#config['model']['diff_pool_net2']['parameters']['num_clusters2'] = int(2708*pool_ratios[0]*pool_ratios[1])
-#config['model']['diff_pool_net2']['parameters']['n_hidden'] = 64
-#config['model']['diff_pool_net2']['parameters']['hidden_channels'] = 32
+# diffpool 1
+config['model']['diff_pool_net1'] = {}
+config['model']['diff_pool_net1']['model_constructor'] = diff_pool_net1
+config['model']['diff_pool_net1']['parameters'] = {}
+config['model']['diff_pool_net1']['parameters']['num_clusters1'] = int(2708*pool_ratios[0])
+config['model']['diff_pool_net1']['parameters']['num_clusters2'] = int(2708*pool_ratios[0]*pool_ratios[1])
+config['model']['diff_pool_net1']['parameters']['hidden_channels'] = 32
+
+# diffpool 2
+config['model']['diff_pool_net2'] = {}
+config['model']['diff_pool_net2']['parameters'] = {}
+config['model']['diff_pool_net2']['model_constructor'] = diff_pool_net2
+config['model']['diff_pool_net2']['parameters']['num_clusters1'] = int(2708*pool_ratios[0])
+config['model']['diff_pool_net2']['parameters']['num_clusters2'] = int(2708*pool_ratios[0]*pool_ratios[1])
+config['model']['diff_pool_net2']['parameters']['n_hidden'] = 64
+config['model']['diff_pool_net2']['parameters']['hidden_channels'] = 32
 
 # sagpool
 config['model']['sagpool'] = {}
@@ -63,7 +63,7 @@ config['optimizer']['lr'] = 0.01
 config['train_fracs'] = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
 
 # epochs
-config['epochs'] = 10
+config['epochs'] = 100
 
 # early stopping
 config['patience'] = 100
