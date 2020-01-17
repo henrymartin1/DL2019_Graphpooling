@@ -6,6 +6,7 @@ from models.gunet_diffpool1 import diff_pool_net1
 from models.gunet_diffpool2 import diff_pool_net2
 from models.gunet_topk import gunet_topk
 from models.gunet_sagpool import sagpool
+from models.gcn_plain import gcn_plain
 
 config = {}
 
@@ -14,6 +15,10 @@ pool_ratios = [0.35, 0.35]
 
 # model parameters
 config['model'] = {}
+
+config['model']['gcn_plain'] = {}
+config['model']['gcn_plain']['model_constructor'] = gcn_plain
+config['model']['gcn_plain']['parameters'] = {}
 
 # diffpool 1
 config['model']['diff_pool_net1'] = {}
@@ -29,7 +34,7 @@ config['model']['diff_pool_net2']['parameters'] = {}
 config['model']['diff_pool_net2']['model_constructor'] = diff_pool_net2
 config['model']['diff_pool_net2']['parameters']['num_clusters1'] = int(2708*pool_ratios[0])
 config['model']['diff_pool_net2']['parameters']['num_clusters2'] = int(2708*pool_ratios[0]*pool_ratios[1])
-config['model']['diff_pool_net2']['parameters']['n_hidden'] = 64
+config['model']['diff_pool_net2']['parameters']['n_hidden'] = 16
 config['model']['diff_pool_net2']['parameters']['hidden_channels'] = 32
 
 
@@ -61,9 +66,9 @@ config['optimizer']['lr'] = 0.01
 
 
 # epochs and repeats
-config['epochs'] = 100
-config['tracked_epochs'] = [1, 10, 25, 50, 100, 150]
-config['n_repeats'] = 2
+config['epochs'] = 201
+config['tracked_epochs'] = [1, 10, 25, 50, 100, 150, 201]
+config['n_repeats'] = 10
 config['patience'] = 100
 
 # output

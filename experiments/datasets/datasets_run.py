@@ -16,6 +16,7 @@ import random
 import csv
 import pickle
 
+sys.path.append(os.getcwd())
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -65,7 +66,7 @@ def train(model_name):
 
 
 # define device
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device(1)
 
 loss_lambda = config['loss_lambda']
 lr = config['optimizer']['lr']
@@ -79,7 +80,7 @@ acc_tracking_dict = {'dataset': [],
                      'mean': [],
                      'std_dev': []}
 
-for dataset_name in ['Cora', 'PubMed', 'CoraFull']:
+for dataset_name in ['PubMed', 'CoraFull', 'Cora']:
     # define data
     #dataset_name = 'Cora' # 'PubMed', 'CoraFull'
     path = osp.join(os.getcwd(), '..', 'data', dataset_name)
@@ -93,11 +94,36 @@ for dataset_name in ['Cora', 'PubMed', 'CoraFull']:
     data.batch = None
     data.adj = to_dense_adj(data.edge_index)
     # data 
+    data.test_mask = torch.empty(size=torch.Size([data.x.shape[0]]), dtype=torch.bool)
+    data.val_mask = torch.empty(size=torch.Size([data.x.shape[0]]), dtype=torch.bool)
+    data.train_mask = torch.empty(size=torch.Size([data.x.shape[0]]), dtype=torch.bool)
+
     data = data.to(device)
+
+
+
+    training_fraction = 0.05
+    if dataset_name == 'CoraFull':
+         #set the training mask according to training_fraction:
+        for node in range(0, data.num_nodes-1):
+            if random.random() < training_fraction: #with probability training_fraction include the node in the training set
+                data.train_mask[node] = True
+                data.val_mask[node] = False
+                data.test_mask[node] = False
+            else:
+                data.train_mask[node] = False
+                if random.random() < 0.5: #split the remaining nodes roughly evenly between validation and test sets
+                    data.val_mask[node] = True
+                    data.test_mask[node] = False
+                else:
+                    data.val_mask[node] = False
+                    data.test_mask[node] = True
     
     
     for model_this in config['model'].keys():
-        
+        if dataset_name in ['CoraFull', 'PubMed'] and model_this in ['diff_pool_net1', 'diff_pool_net2']:
+            continue
+
         model_accuracies = []
         
         for n_repeats in range(config['n_repeats']):
