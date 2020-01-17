@@ -21,6 +21,7 @@ dependencies:
   - future
   - pillow
   - tensorboard
+  - seaborn
   - pip: 
     - h5py
     - torch-cluster

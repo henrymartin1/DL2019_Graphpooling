@@ -91,7 +91,7 @@ train_percentage_dict = {   'method': [],
                             'best_accuracy': []}
 
 
-for n_repeats in range(1):
+for n_repeats in range(10):
     print("Repetition {} of 10".format(str(n_repeats+1)))
     for model_this in config['model'].keys():
         for training_fraction in config['train_fracs']:

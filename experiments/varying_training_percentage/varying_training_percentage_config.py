@@ -63,7 +63,7 @@ config['optimizer']['lr'] = 0.01
 config['train_fracs'] = [0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
 
 # epochs
-config['epochs'] = 100
+config['epochs'] = 201
 
 # early stopping
-config['patience'] = 100
+config['patience'] = 201

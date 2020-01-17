@@ -1,3 +1,9 @@
+"""
+Based on the graph unet implementation from torch_geometric
+@author: cbohn
+"""
+
+
 import torch
 import torch.nn.functional as F
 from torch_sparse import spspmm
@@ -5,59 +11,27 @@ from torch_geometric.nn import TopKPooling, GCNConv
 from torch_geometric.utils import (add_self_loops, sort_edge_index,
                                    remove_self_loops)
 from torch_geometric.utils.repeat import repeat
-import os
-import os.path as osp
-
-import torch
-import torch.nn.functional as F
-from torch_sparse import spspmm
-from torch_geometric.nn import TopKPooling, GCNConv, SAGPooling
-from torch_geometric.utils import (add_self_loops, sort_edge_index,
-                                   remove_self_loops)
-from torch_geometric.utils.repeat import repeat
-
-from torch_geometric.datasets import Planetoid, CoraFull
-from torch_geometric.utils import dropout_adj
-
-
-from torch_geometric.nn.pool.topk_pool import topk,filter_adj
-from torch.nn import Parameter
-
-
-class SAGPool(torch.nn.Module):
-    """
-      Authors' implementation of SAG pool, based on:
-      https://github.com/inyeoplee77/SAGPool
-      However, for training, use the torch_geometric implementation
-      in SAGPooling.
-    """
-    def __init__(self,in_channels,ratio=0.8,Conv=GCNConv,non_linearity=torch.tanh):
-        super(SAGPool,self).__init__()
-
-        self.in_channels = in_channels
-        self.ratio = ratio
-        self.score_layer = Conv(in_channels,1)
-        self.non_linearity = non_linearity
-    def forward(self, x, edge_index, edge_attr=None, batch=None):
-        if batch is None:
-            batch = edge_index.new_zeros(x.size(0))
-        #x = x.unsqueeze(-1) if x.dim() == 1 else x
-        score = self.score_layer(x,edge_index).squeeze()
-
-        perm = topk(score, self.ratio, batch)
-        x = x[perm] * self.non_linearity(score[perm]).view(-1, 1)
-        batch = batch[perm]
-        edge_index, edge_attr = filter_adj(
-            edge_index, edge_attr, perm, num_nodes=score.size(0))
-
-        return x, edge_index, edge_attr, batch, perm
-
 
 
 class GraphUNet(torch.nn.Module):
+    r"""The Graph U-Net model from the `"Graph U-Nets"
+    <https://arxiv.org/abs/1905.05178>`_ paper which implements a U-Net like
+    architecture with graph pooling and unpooling operations.
+
+    Args:
+        in_channels (int): Size of each input sample.
+        hidden_channels (int): Size of each hidden sample.
+        out_channels (int): Size of each output sample.
+        depth (int): The depth of the U-Net architecture.
+        pool_ratios (float or [float], optional): Graph pooling ratio for each
+            depth. (default: :obj:`0.5`)
+        sum_res (bool, optional): If set to :obj:`False`, will use
+            concatenation for integration of skip connections instead
+            summation. (default: :obj:`True`)
+        act (torch.nn.functional, optional): The nonlinearity to use.
+            (default: :obj:`torch.nn.functional.relu`)
     """
-      Based on the graph unet example from torch_geometric
-    """
+
     def __init__(self, in_channels, hidden_channels, out_channels, depth,
                  pool_ratios=0.5, sum_res=True, act=F.relu, dropout_rate=0):
         super(GraphUNet, self).__init__()
@@ -77,7 +51,7 @@ class GraphUNet(torch.nn.Module):
         self.pools = torch.nn.ModuleList()
         self.down_convs.append(GCNConv(in_channels, channels, improved=True))
         for i in range(depth):
-            self.pools.append(SAGPooling(channels, self.pool_ratios[i]))
+            self.pools.append(TopKPooling(channels, self.pool_ratios[i]))
             self.down_convs.append(GCNConv(channels, channels, improved=True))
 
         in_channels = channels if sum_res else 2 * channels
@@ -98,6 +72,7 @@ class GraphUNet(torch.nn.Module):
             conv.reset_parameters()
 
     def forward(self, x, edge_index, batch=None):
+        """"""
         if batch is None:
             batch = edge_index.new_zeros(x.size(0))
         edge_weight = x.new_ones(edge_index.size(1))
@@ -160,23 +135,3 @@ class GraphUNet(torch.nn.Module):
         return '{}({}, {}, {}, depth={}, pool_ratios={})'.format(
             self.__class__.__name__, self.in_channels, self.hidden_channels,
             self.out_channels, self.depth, self.pool_ratios)
-        
-
-
-
-class sagpool(torch.nn.Module):
-    def __init__(self, dataset, depth, pool_ratios, dropout_rate, p_dropout_adj=0.2, p_dropout_nodes=0.92, hidden_channels=32):
-        super(sagpool, self).__init__()
-        self.unet = GraphUNet(in_channels=dataset.num_features, hidden_channels=hidden_channels, out_channels=dataset.num_classes, \
-         depth=depth, pool_ratios=pool_ratios, dropout_rate=dropout_rate)
-        self.initial_dropout_adj = p_dropout_adj
-        self.initial_dropout_nodes = p_dropout_nodes
-
-    def forward(self, data):
-        edge_index, _ = dropout_adj(
-            data.edge_index, p=self.initial_dropout_adj, force_undirected=True,
-            num_nodes=data.num_nodes, training=self.training)
-        x = F.dropout(data.x, p=self.initial_dropout_nodes, training=self.training)
-
-        x = self.unet(x, edge_index)
-        return F.log_softmax(x, dim=1)
