@@ -12,6 +12,7 @@ import warnings
 from datetime import datetime
 import json
 import time
+import pickle
 
 import pandas as pd
 import numpy as np
@@ -25,7 +26,7 @@ import torch.nn.functional as F
 
 from networkx import from_numpy_matrix
 
-from experiments.computational_complexity.comp_complexity_config import config
+from experiments.complexity.complexity_config import config
 
 
 def test(model_name):
@@ -97,7 +98,7 @@ memory_tracking_dict = {'method': [],
 best_val_acc = test_acc = 0
 
 t_start_all = time.time()
-for n_repeats in range(10):
+for n_repeats in range(config['n_repeats']):
     
    
     for model_this in config['model'].keys():
@@ -107,11 +108,11 @@ for n_repeats in range(10):
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
         
         t_start = time.time()
-        for epoch in range(1, 6):
+        for epoch in range(config['epochs']):
                 
             train(model_this)
         
-            if epoch in [1, 5, 10, 25, 50, 100]:
+            if epoch in config['tracked_epochs']:
                 accs = test(model_this)
                 t_this = time.time()-t_start
                 
@@ -128,7 +129,6 @@ for n_repeats in range(10):
                 
                 log = 'Method: {}, Epoch: {:03d}, Train: {:.4f}, Val: {:.4f}, Test: {:.4f}, time: {:.4f}s'
                 print(log.format(model_this, epoch, train_acc, best_val_acc, test_acc, t_this))
-        
         max_mem = torch.cuda.max_memory_allocated(device)
         
         memory_tracking_dict['method'].append(model_this)
@@ -143,21 +143,9 @@ print('finished', 'total time', time.time()-t_start_all)
 time_tracking_df = pd.DataFrame(data=time_tracking_dict)
 memory_tracking_df = pd.DataFrame(data=memory_tracking_dict)
 
-# plot
-sns.set(style="whitegrid")
-
-# Draw a nested barplot to show survival for class and sex
-g = sns.catplot(x="n_epochs", y="time", hue="method", data=time_tracking_df,
-                height=6, kind="bar", palette="muted")
-g.despine(left=True)
-g.set_ylabels("Time in seconds")
+output_dict = {'time': time_tracking_df, 'memory': memory_tracking_df}
+print('Write to:',  config['output_file'])
+pickle.dump(output_dict, open( config['output_file'], "wb" ) )
 
 
-
-g = sns.catplot(x="n_epochs", y="accuracy", hue="method", data=time_tracking_df,
-                height=6, kind="point", palette="muted")
-
-
-g = sns.catplot(x="method", y="memory", data=memory_tracking_df,
-                height=6, kind="bar", palette="muted")
 

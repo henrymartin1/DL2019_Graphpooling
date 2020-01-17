@@ -60,8 +60,10 @@ config['optimizer']['lr'] = 0.01
 
 
 
-# epochs
-config['epochs'] = 500
+# epochs and repeats
+config['epochs'] = 151
+config['tracked_epochs'] = [1, 10, 25, 50, 100, 150]
+config['n_repeats'] = 2
 
-# early stopping
-config['patience'] = 100
+# output
+config['output_file'] = os.path.join('experiments', 'complexity', 'complexity_results.pkl')
