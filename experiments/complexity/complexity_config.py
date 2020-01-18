@@ -68,7 +68,7 @@ config['optimizer']['lr'] = 0.01
 
 
 # epochs and repeats
-config['epochs'] = 201
+config['epochs'] = 301
 config['tracked_epochs'] = [0, 1, 10, 25, 50, 100, 150, 200, 250, 300]
 config['n_repeats'] = 10
 
