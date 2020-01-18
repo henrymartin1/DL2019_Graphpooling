@@ -74,5 +74,8 @@ train_percentage_df = pd.DataFrame(data=train_percentage_dict)
 sns.set(style="whitegrid")
 
                 
-plot = sns.catplot(x="train_percentage", y="best_accuracy", hue="method", data=train_percentage_df, height=6, kind="point", palette="muted")
+plot = sns.catplot(x="train_percentage", y="best_accuracy", hue="method", data=train_percentage_df, height=6, kind="point", palette="muted", linestyles=[":",":",":", ":", ":"])
+plot.despine(left=True)
+plot.set_ylabels("Best Accuracy")
+plot.set_xlabels("Train Percentage")
 plot.savefig("percentage_plot.png")
