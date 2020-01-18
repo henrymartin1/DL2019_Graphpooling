@@ -28,9 +28,9 @@ Here are the files by experiment:
 - varying_training_percentage
 	- `config:` varying_training_percentage_config.py
 	- `main:` varying_training_percentage_experiments.py
-	- `wdir:` `.../DL2019_Graphpooling/experiments/
+	- `wdir:` `.../DL2019_Graphpooling/experiments/`
 	- `plots:` integrated in main file
-	varying_training_percentage`
+	varying_training_percentage
 
 Feel free to play around with the config file to generate alternative experiments. 
 
