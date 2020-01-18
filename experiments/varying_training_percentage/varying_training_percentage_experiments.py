@@ -122,7 +122,8 @@ for n_repeats in range(10):
                 if val_acc > best_val_acc:
                     best_val_acc = val_acc
                     test_acc = tmp_test_acc
-                print("Epoch {} done".format(str(epoch)))
+                if epoch % 50 == 0:
+                    print("Epoch {} done".format(str(epoch)))
             
             train_percentage_dict['method'].append(model_this)
             train_percentage_dict['best_accuracy'].append(test_acc)

@@ -6,6 +6,7 @@ from gunet_diffpool1 import diff_pool_net1
 from gunet_diffpool2 import diff_pool_net2
 from gunet_topk import gunet_topk
 from gunet_sagpool import sagpool
+from gcn_plain import gcn_plain
 
 config = {}
 
@@ -14,6 +15,10 @@ pool_ratios = [0.35, 0.35]
 
 # model parameters
 config['model'] = {}
+
+config['model']['gcn_plain'] = {}
+config['model']['gcn_plain']['model_constructor'] = gcn_plain
+config['model']['gcn_plain']['parameters'] = {}
 
 # diffpool 1
 config['model']['diff_pool_net1'] = {}
@@ -29,7 +34,7 @@ config['model']['diff_pool_net2']['parameters'] = {}
 config['model']['diff_pool_net2']['model_constructor'] = diff_pool_net2
 config['model']['diff_pool_net2']['parameters']['num_clusters1'] = int(2708*pool_ratios[0])
 config['model']['diff_pool_net2']['parameters']['num_clusters2'] = int(2708*pool_ratios[0]*pool_ratios[1])
-config['model']['diff_pool_net2']['parameters']['n_hidden'] = 64
+config['model']['diff_pool_net2']['parameters']['n_hidden'] = 16
 config['model']['diff_pool_net2']['parameters']['hidden_channels'] = 32
 
 # sagpool
