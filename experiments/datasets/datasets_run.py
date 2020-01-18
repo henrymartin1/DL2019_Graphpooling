@@ -81,7 +81,7 @@ acc_tracking_dict = {'dataset': [],
                      'mean': [],
                      'std_dev': []}
 
-for dataset_name in ['PubMed', 'CoraFull', 'Cora']:
+for dataset_name in ['PubMed', 'Cora']: # CoraFull omitted for this run
     # define data
     #dataset_name = 'Cora' # 'PubMed', 'CoraFull'
     path = osp.join(os.getcwd(), '..', 'data', dataset_name)
@@ -95,16 +95,13 @@ for dataset_name in ['PubMed', 'CoraFull', 'Cora']:
     data.batch = None
     data.adj = to_dense_adj(data.edge_index)
     # data 
-    data.test_mask = torch.empty(size=torch.Size([data.x.shape[0]]), dtype=torch.bool)
-    data.val_mask = torch.empty(size=torch.Size([data.x.shape[0]]), dtype=torch.bool)
-    data.train_mask = torch.empty(size=torch.Size([data.x.shape[0]]), dtype=torch.bool)
-
-    data = data.to(device)
-
-
+   
 
     training_fraction = 0.05
     if dataset_name == 'CoraFull':
+        data.test_mask = torch.empty(size=torch.Size([data.x.shape[0]]), dtype=torch.bool)
+        data.val_mask = torch.empty(size=torch.Size([data.x.shape[0]]), dtype=torch.bool)
+        data.train_mask = torch.empty(size=torch.Size([data.x.shape[0]]), dtype=torch.bool)
          #set the training mask according to training_fraction:
         for node in range(0, data.num_nodes-1):
             if random.random() < training_fraction: #with probability training_fraction include the node in the training set
@@ -119,7 +116,8 @@ for dataset_name in ['PubMed', 'CoraFull', 'Cora']:
                 else:
                     data.val_mask[node] = False
                     data.test_mask[node] = True
-    
+
+    data = data.to(device)   
     
     for model_this in config['model'].keys():
         if dataset_name in ['CoraFull', 'PubMed'] and model_this in ['diff_pool_net1', 'diff_pool_net2']:
