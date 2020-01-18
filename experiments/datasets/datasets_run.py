@@ -74,6 +74,7 @@ lr = config['optimizer']['lr']
 
 # define experiment
 acc_tracking_dict = {'dataset': [],
+                     'run': [],
                     'n_epochs': [],
                      'method': [],
                      'accuracy': [],
@@ -147,25 +148,23 @@ for dataset_name in ['PubMed', 'CoraFull', 'Cora']:
                     best_val_acc = val_acc
                     test_acc = tmp_test_acc
                 
-                model_accuracies.append(test_acc)
-                
-                acc_tracking_dict['dataset'].append(dataset_name)
-                acc_tracking_dict['n_epochs'].append(epoch)
-                acc_tracking_dict['method'].append(model_this)
-                acc_tracking_dict['accuracy'].append(test_acc)
-                
-                #mean and std of the best test_acc's so far
-                acc_tracking_dict['mean'].append(np.mean(model_accuracies)) 
-                acc_tracking_dict['std_dev'].append(np.std(model_accuracies))
-                
-                
                 if epoch in config['tracked_epochs']:
                     log = 'Method: {}, Run: {:03d}, Epoch: {:03d}, Train: {:.4f}, Val: {:.4f}, Test: {:.4f}'
-                    print(log.format(model_this, n_repeats, epoch, train_acc, best_val_acc, test_acc))                   
+                    print(log.format(model_this, n_repeats, epoch, train_acc, best_val_acc, test_acc))
                     
+            model_accuracies.append(test_acc)
                 
-             
-            
+            acc_tracking_dict['dataset'].append(dataset_name)
+            acc_tracking_dict['run'].append(n_repeats)
+            acc_tracking_dict['n_epochs'].append(config['epochs'])
+            acc_tracking_dict['method'].append(model_this)
+            acc_tracking_dict['accuracy'].append(test_acc)
+                
+            #mean and std of the best test_acc's so far
+            acc_tracking_dict['mean'].append(np.mean(model_accuracies)) 
+            acc_tracking_dict['std_dev'].append(np.std(model_accuracies))
+                
+           
 print('finished')
 
 acc_tracking_df = pd.DataFrame(data=acc_tracking_dict)
