@@ -39,7 +39,3 @@ Feel free to play around with the config file to generate alternative experiment
 For GPU support replace `cpuonly` with `cudatoolkit=10.1` using your cuda version. You can run a motivating example using [binder](https://mybinder.org/v2/gh/henrymartin1/DL2019_Graphpooling/master)
 
 
-There is a collaborative [markdown sheet](https://hackmd.io/HmSkOdIBTqmf7_wmManjVQ)
-
-
-
